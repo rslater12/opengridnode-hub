@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>OpenGridNode Config</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 40px;
+            background: #f1f5f9;
+        }
+
+        .card {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .res {
+            margin-top: 20px;
+            padding: 15px;
+            background: #eff6ff;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h2>Location Configuration</h2>
+        <p style="font-size: 13px; color: #64748b;">Enter coordinates to link to the nearest local substation.</p>
+        <input type="number" id="lat" step="any" placeholder="Latitude (e.g. 51.50)">
+        <input type="number" id="lon" step="any" placeholder="Longitude (e.g. -0.12)">
+        <button onclick="save()">Find & Link Substation</button>
+        <div id="res" class="res">
+            Linked to: <b id="out-name"></b><br>
+            DNO Region: <span id="out-reg"></span><br>
+            ID: <code id="out-id"></span></code>
+            <p style="color: #10b981; font-weight: bold;">Saved to .env</p>
+            <p style="color: #f97316; font-size: 12px; margin-top: 10px;"><b>Action Required:</b> Please restart your
+                OpenGridNode process to apply your new Mesh Identity.</p>
+        </div>
+        <br><a href="../dashboard"
+            style="display:block; text-align:center; color: #64748b; text-decoration: none; font-size: 13px;">← Return
+            to Dashboard</a>
+    </div>
+    <script>
+        async function save() {
+            const lat = document.getElementById('lat').value;
+            const lon = document.getElementById('lon').value;
+            const r = await fetch('/api/config-location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat, lon })
+            });
+            const data = await r.json();
+            if (data.substation) {
+                document.getElementById('out-name').innerText = data.substation.name;
+                document.getElementById('out-reg').innerText = data.substation.regionId;
+                document.getElementById('out-id').innerText = data.substation.id;
+                document.getElementById('res').style.display = 'block';
+            } else { alert('Error: ' + (data.error || 'Failed to link substation')); }
+        }
+    </script>
+</body>
+
+</html>

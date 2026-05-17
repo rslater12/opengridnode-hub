@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>OpenGridNode Hub Dashboard</title>
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --hub-color: #0f172a;
+      --border: #e2e8f0;
+      --table-header: #f8fafc;
+      --success: #10b981;
+      --success-bg: #ecfdf5;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 32px;
+      background: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      background: var(--bg-card);
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: var(--table-header);
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    code {
+      background: #eff6ff;
+      color: var(--primary-dark);
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    #network-graph-container {
+      width: 100%;
+      height: 600px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Graph styles required for hub.js DOM rendering */
+    .graph-node {
+      position: absolute;
+      padding: 10px;
+      background: #ffffff;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      white-space: pre-wrap;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      z-index: 2;
+    }
+
+    .graph-hub {
+      background: var(--hub-color);
+      color: white;
+      border-color: #000;
+      font-size: 13px;
+    }
+
+    .graph-disconnected {
+      border-color: #ef4444 !important;
+      color: #b91c1c;
+      background: #fef2f2;
+      opacity: 0.8;
+      border-style: dashed;
+    }
+
+    .graph-edge {
+      position: absolute;
+      background: #cbd5e1;
+      height: 2px;
+      transform-origin: 0 0;
+      z-index: 1;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    #network-graph {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+
+    .graph-link {
+      stroke: #cbd5e1;
+      stroke-width: 1.5;
+      stroke-dasharray: 4 4;
+    }
+
+    .node-circle {
+      fill: var(--primary);
+      transition: all 0.3s ease;
+    }
+
+    .node-circle.hub {
+      fill: var(--hub-color);
+    }
+
+    .node-text {
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--text-main);
+    }
+
+    .graph-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .graph-link-btn {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .graph-link-btn:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div style="margin-bottom: 8px;">
+    <h1>OpenGridNode Hub Dashboard</h1>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-box">
+      <div class="stat-label">Hub URL</div>
+      <div id="hub-url" class="stat-value">loading...</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Nodes</div>
+      <div id="total-nodes" class="stat-value">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Public Peers</div>
+      <div id="public-peers" class="stat-value">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Public Hubs</div>
+      <div id="hub-peers" class="stat-value">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Regions</div>
+      <div id="region-count" class="stat-value">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Live Export</div>
+      <div id="total-export" class="stat-value">0 kW</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Today's Export</div>
+      <div id="total-export-today" class="stat-value">0 kWh</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Updated</div>
+      <div id="updated-at" class="stat-value">--</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Grid Cluster Map</h2>
+    <div id="network-graph-container">
+      <div id="network-graph"></div>
+    </div>
+    <div class="graph-footer">
+      <span>Live cluster topology mapping active relationships.</span>
+      <a class="graph-link-btn" href="/cluster-map">Open cluster map view</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Region Summary</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Region</th>
+            <th>Load</th>
+            <th>Capacity</th>
+            <th>Stored</th>
+            <th>Storage Available</th>
+            <th>Solar Today</th>
+            <th>Net Impact</th>
+            <th>Live Export</th>
+            <th>Today's Export</th>
+            <th>Nodes</th>
+          </tr>
+        </thead>
+        <tbody id="regions">
+          <tr>
+            <td colspan="10" style="color: var(--text-muted);">Awaiting regional payload...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Public Node Peers</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Node ID</th>
+            <th>Region</th>
+            <th>Role</th>
+            <th>Battery Power</th>
+            <th>Grid Export</th>
+            <th>Battery Capacity</th>
+
+          </tr>
+        </thead>
+        <tbody id="peers">
+          <tr>
+            <td colspan="4" style="color: var(--text-muted);">No peer nodes connected currently.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Connected Hub Peers</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Hub ID</th>
+            <th>Role</th>
+            <th>URL</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="hub-peers-table">
+          <tr>
+            <td colspan="4" style="color: var(--text-muted);">No external hubs linked.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/hub.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,8 @@
+{
+    "name": "gridbnode-crypto",
+    "version": "0.1.0",
+    "description": "Shared crypto utilities for GridNode Hub and Clients",
+    "main": "index.js",
+    "type": "module",
+    "license": "MIT"
+}

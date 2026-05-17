@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GridNode Client Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background:#f9fbff; color:#111827; }
+    h1 { margin-bottom: .25rem; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 18px; margin-bottom: 18px; }
+    .stats { display:flex; gap: 16px; flex-wrap: wrap; }
+    .stat { flex:1; min-width: 160px; padding:16px; border:1px solid #e5e7eb; border-radius: 10px; background:#fff; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+    th { background:#f3f4f6; }
+    code { background:#eef2ff; padding:4px 6px; border-radius: 4px; font-size: 0.85rem; }
+    .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
+    .status.online { background: #d1fae5; color: #065f46; }
+    .status.offline { background: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+<body>
+  <h1>GridNode Client Dashboard</h1>
+  <div class="card stats">
+    <div class="stat"><strong>Node ID</strong><div id="node-id">loading...</div></div>
+    <div class="stat"><strong>Region</strong><div id="region-id">loading...</div></div>
+    <div class="stat"><strong>Role</strong><div id="node-role">loading...</div></div>
+    <div class="stat"><strong>Public</strong><div id="public-node">loading...</div></div>
+    <div class="stat"><strong>Hub</strong><div id="hub-connected">loading...</div></div>
+    <div class="stat"><strong>Peers</strong><div id="peer-count">0</div></div>
+    <div class="stat"><strong>WebRTC</strong><div id="webrtc-status">loading...</div></div>
+  </div>
+  <div class="card">
+    <h2>Latest metrics</h2>
+    <table>
+      <tbody>
+        <tr><th>House load</th><td id="house-load">-</td></tr>
+        <tr><th>Battery power</th><td id="battery-power">-</td></tr>
+        <tr><th>Battery reserve</th><td id="battery-reserve">-</td></tr>
+        <tr><th>State of charge</th><td id="soc">-</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>Peer connections (Socket.IO)</h2>
+    <table><thead><tr><th>Peer ID</th><th>Status</th><th>Type</th></tr></thead><tbody id="peers"></tbody></table>
+  </div>
+  <div class="card">
+    <h2>WebRTC connections (Direct data channel)</h2>
+    <table><thead><tr><th>Peer ID</th><th>Status</th></tr></thead><tbody id="webrtc-peers"></tbody></table>
+  </div>
+  <div class="card">
+    <h2>Network info</h2>
+    <pre id="network-json"></pre>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenGridNode Cluster Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      overflow: hidden;
+    }
+
+    .header {
+      background-color: #1e293b;
+      padding: 0 24px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 70px;
+      box-sizing: border-box;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: -0.02em;
+    }
+
+    .header .stats {
+      font-size: 13px;
+      display: flex;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .header .stats span {
+      color: #94a3b8;
+    }
+
+    .header .stats strong {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    #map {
+      height: calc(100vh - 70px);
+      width: 100%;
+      background: #e2e8f0;
+    }
+
+    .info,
+    .legend {
+      padding: 14px 18px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #f1f5f9;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+    }
+
+    .info h4 {
+      margin: 0 0 10px;
+      color: #94a3b8;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .info-data {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .info-data b {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .legend {
+      line-height: 24px;
+      font-size: 12px;
+    }
+
+    .legend i {
+      width: 16px;
+      height: 16px;
+      float: left;
+      margin-right: 10px;
+      margin-top: 4px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .leaflet-control-layers {
+      background: rgba(15, 23, 42, 0.95) !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #334155 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .leaflet-control-layers-toggle {
+      filter: invert(1);
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #334155;
+      font-family: inherit;
+    }
+
+    .leaflet-popup-tip {
+      background: #1e293b !important;
+    }
+
+    .leaflet-tooltip {
+      background: #1e293b !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #334155 !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+      border-radius: 8px !important;
+      white-space: nowrap !important;
+    }
+
+    @keyframes pulse-solar {
+      0% {
+        fill: #38bdf8;
+        background-color: #38bdf8;
+      }
+
+      50% {
+        fill: #facc15;
+        background-color: #facc15;
+      }
+
+      100% {
+        fill: #38bdf8;
+      }
+    }
+
+    @keyframes pulse-battery {
+      0% {
+        fill: #38bdf8;
+        background-color: #38bdf8;
+      }
+
+      50% {
+        fill: #ffffff;
+        background-color: #ffffff;
+      }
+
+      100% {
+        fill: #38bdf8;
+      }
+    }
+
+    .pulse-solar {
+      animation: pulse-solar 2s infinite;
+    }
+
+    .pulse-battery {
+      animation: pulse-battery 2s infinite;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>OpenGridNode Cluster Map</h1>
+    <div class="stats">
+      <span>Nodes: <strong id="total-nodes">0</strong></span>
+      <span>Public: <strong id="public-peers">0</strong></span>
+      <span>Hubs: <strong id="hub-peers">0</strong></span>
+      <span>Regions: <strong id="region-count">0</strong></span>
+      <span>Capacity: <strong id="total-capacity" style="color: #029e6a;">0</strong> <small>kWh</small></span>
+      <span>Stored: <strong id="total-stored" style="color: #f59e0b;">0</strong> <small>kWh</small></span>
+      <span>Reserve: <strong id="total-reserve" style="color: #f43f5e;">0</strong> <small>kW</small></span>
+      <span>Live Export: <strong id="total-export" style="color: #38bdf8;">0</strong> <small>W</small></span>
+      <span>Total Today: <strong id="total-export-today" style="color: #10b981;">0</strong> <small>kWh</small></span>
+      <span>Live Solar Generation: <strong id="total-solar" style="color: #facc15;">0</strong> <small>W</small></span>
+      <span style="border-left: 1px solid #334155; padding-left: 15px;">Updated: <strong
+          id="updated-at">--:--:--</strong></span>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    const map = L.map('map').setView([54.3, -2.5], 6);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+
+    map.createPane('substationsPane');
+    map.getPane('substationsPane').style.zIndex = 650;
+    map.getPane('substationsPane').style.pointerEvents = 'none';
+
+    let currentRegionsData = {}; // This is the primary store for the map
+    let rawConnectedPeersList = [];
+    let hoveredRegion = null;
+    let dnoRegionsLayer;
+    const substationMarkers = {};
+
+    const substationsLayerGroup = L.layerGroup().addTo(map);
+
+    const dnoRegionData = {
+      "type": "FeatureCollection",
+      "features": [
+        { "type": "Feature", "properties": { "name": "london-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.35, 51.35], [0.15, 51.35], [0.15, 51.65], [-0.35, 51.65], [-0.35, 51.35]]] } },
+        {
+          "type": "Feature",
+          "properties": { "name": "south-east-dno" },
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [[0.1, 50.75], [1.4, 51.15], [1.4, 51.45], [0.3, 51.5], [0.2, 51.9], [-0.2, 52.0], [-1.4, 51.9], [-1.4, 50.8], [0.1, 50.75]],
+              [[-0.35, 51.35], [0.15, 51.35], [0.15, 51.65], [-0.35, 51.65], [-0.35, 51.35]]
+            ]
+          }
+        },
+        { "type": "Feature", "properties": { "name": "southern-england-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-2.6, 50.5], [-1.4, 50.8], [-1.4, 51.9], [-2.3, 52.0], [-2.6, 51.2], [-2.6, 50.5]]] } },
+        { "type": "Feature", "properties": { "name": "south-west-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-5.8, 50.0], [-2.6, 50.5], [-2.6, 51.2], [-3.5, 51.2], [-4.5, 51.0], [-5.8, 50.0]]] } },
+        { "type": "Feature", "properties": { "name": "east-england-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[0.3, 51.5], [1.3, 51.8], [1.7, 52.5], [1.7, 53.0], [0.2, 53.0], [-0.2, 52.0], [0.2, 51.9], [0.3, 51.5]]] } },
+        { "type": "Feature", "properties": { "name": "east-midlands-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-1.8, 52.0], [-0.2, 52.0], [0.2, 53.0], [0.2, 53.5], [-1.1, 53.5], [-2.0, 53.5], [-2.0, 53.0], [-1.8, 52.0]]] } },
+        { "type": "Feature", "properties": { "name": "west-midlands-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-3.1, 51.8], [-1.8, 52.0], [-2.0, 53.0], [-2.8, 53.1], [-3.4, 52.8], [-3.1, 51.8]]] } },
+        { "type": "Feature", "properties": { "name": "south-wales-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-5.3, 51.6], [-2.9, 51.5], [-3.1, 51.8], [-3.4, 52.5], [-4.9, 52.2], [-5.3, 51.6]]] } },
+        { "type": "Feature", "properties": { "name": "merseyside-wales-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-4.9, 52.2], [-3.4, 52.5], [-3.4, 52.8], [-2.8, 53.1], [-2.0, 53.0], [-2.1, 53.5], [-3.5, 53.5], [-4.7, 53.4], [-4.9, 52.2]]] } },
+        { "type": "Feature", "properties": { "name": "north-west-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-3.6, 53.5], [-2.1, 53.5], [-1.9, 54.5], [-3.5, 54.5], [-3.6, 53.5]]] } },
+        { "type": "Feature", "properties": { "name": "yorkshire-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-2.1, 53.5], [0.2, 53.5], [0.2, 54.5], [-1.9, 54.5], [-2.1, 53.5]]] } },
+        { "type": "Feature", "properties": { "name": "north-east-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-3.5, 54.5], [-1.9, 54.5], [0.2, 54.5], [-2.0, 55.7], [-3.3, 55.2], [-3.5, 54.5]]] } },
+        { "type": "Feature", "properties": { "name": "south-scotland-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-5.0, 54.8], [-3.3, 55.2], [-2.0, 55.7], [-2.0, 56.1], [-4.8, 56.6], [-5.5, 56.1], [-5.0, 54.8]]] } },
+        { "type": "Feature", "properties": { "name": "north-scotland-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-7.4, 56.2], [-4.8, 56.6], [-2.0, 56.1], [-1.8, 57.7], [-4.4, 59.0], [-7.0, 58.2], [-7.4, 56.2]]] } },
+        { "type": "Feature", "properties": { "name": "northern-ireland-dno" }, "geometry": { "type": "Polygon", "coordinates": [[[-8.6, 54.1], [-6.0, 54.1], [-6.0, 55.2], [-7.9, 55.2], [-8.6, 54.1]]] } }
+      ]
+    };
+
+    const substationsCountPerRegion = {};
+
+    function getColor(utilization) {
+      if (utilization === undefined || utilization === null) return '#475569';
+      if (utilization >= 90) return '#ef4444';
+      if (utilization >= 50) return '#f59e0b';
+      return '#10b981';
+    }
+
+    function style(feature) {
+      const data = currentRegionsData[feature.properties.name];
+      return {
+        fillColor: getColor(data ? data.utilization : null),
+        weight: 1.5,
+        opacity: 0.8,
+        color: '#1e293b',
+        dashArray: '3',
+        fillOpacity: 0.5
+      };
+    }
+
+    const info = L.control();
+    info.onAdd = function () {
+      this._div = L.DomUtil.create('div', 'info');
+      this.update();
+      return this._div;
+    };
+
+    info.update = function (name) {
+      const d = name ? currentRegionsData[name] : null;
+      const physicalSubstationCount = name ? (substationsCountPerRegion[name] || 0) : 0;
+
+      if (name) {
+        this._div.innerHTML = `
+          <h4>Region Status</h4>
+          <div class="info-data">
+            <span style="color: #f1f5f9; font-weight: 700; text-transform: uppercase;">${name.replace(/-/g, ' ')}</span><br/>
+            Nodes Active: <b>${d?.nodeCount || 0}</b><br/>
+            Physical Substations: <b style="color: #f97316;">${physicalSubstationCount}</b><br/>
+            Energy Stored: <b>${(d?.energyRemainingKwh || 0).toFixed(1)} kWh</b><br/>
+            Total Capacity: <b>${(d?.batteryCapacityKwh || 0).toFixed(1)} kWh</b><br/>
+            Space Available: <b style="color: #10b981;">${(d?.freeSpaceKwh || 0).toFixed(1)} kWh</b><br/>
+            Live Export: <b style="color: #38bdf8;">${((d?.totalExportKW || 0) * 1000).toFixed(0)} W</b><br/>
+            Utilisation: <b style="color: ${getColor(d?.utilization)}">${(d?.utilization || 0).toFixed(1)}%</b>
+          </div>
+        `;
+      } else {
+        this._div.innerHTML = '<h4>Region Status</h4><div class="info-data" style="color: #94a3b8;">Hover over a region to inspect capacity</div>';
+      }
+    };
+    info.addTo(map);
+
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function () {
+      const div = L.DomUtil.create('div', 'legend');
+      div.innerHTML += '<h4>Storage Status</h4>';
+      div.innerHTML += '<i style="background: #ef4444"></i> Full (>90%)<br>';
+      div.innerHTML += '<i style="background: #f59e0b"></i> Half Full (50-90%)<br>';
+      div.innerHTML += '<i style="background: #10b981"></i> Fill Me Up (<50%)<br>';
+      div.innerHTML += '<i style="background: #475569"></i> No Data<br>';
+      div.innerHTML += '<h4 style="margin-top: 10px; margin-bottom: 5px;">Active Grid Support</h4>';
+      div.innerHTML += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;"><div style="width: 10px; height: 10px; background: #38bdf8; border-radius: 50%;"></div> Substation (Idle)</div>';
+      div.innerHTML += '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;"><div class="pulse-solar" style="width: 10px; height: 10px; background: #38bdf8; border-radius: 50%; border: 1px solid #fff; display: inline-block;"></div> Solar Generation</div>';
+      div.innerHTML += '<div style="display: flex; align-items: center; gap: 8px;"><div class="pulse-battery" style="width: 10px; height: 10px; background: #38bdf8; border-radius: 50%; border: 1px solid #fff; display: inline-block;"></div> Battery Support</div>';
+      return div;
+    };
+    legend.addTo(map);
+
+    const overlayMaps = {
+      "Show Substations": substationsLayerGroup
+    };
+    L.control.layers(null, overlayMaps, { collapsed: false }).addTo(map);
+
+    function updateUI(data) {
+      if (!data) return;
+      if (data.regions) {
+        // Perform a merge to preserve carbon intensity data fields
+        for (const regionId in data.regions) {
+          const incoming = data.regions[regionId];
+          currentRegionsData[regionId] = {
+            ...(currentRegionsData[regionId] || {}),
+            ...incoming
+          };
+        }
+      }
+      // Hub sends nodes as 'publicNodes' in the cluster graph
+      rawConnectedPeersList = data.publicNodes || data.peers || [];
+
+      // Update Substation Flashing based on current flows
+      for (const subId in substationMarkers) {
+        const marker = substationMarkers[subId];
+        let subMetrics = null;
+
+        for (const regionName in currentRegionsData) {
+          if (currentRegionsData[regionName].substations && currentRegionsData[regionName].substations[subId]) {
+            subMetrics = currentRegionsData[regionName].substations[subId];
+            break;
+          }
+        }
+
+        const el = marker.getElement();
+        if (el) {
+          if (subMetrics) {
+            const solarGen = Number(subMetrics.solarPowerW || 0);
+            const batteryExp = Number(subMetrics.batteryToGridW || 0);
+            const hasStorage = (subMetrics.nodeCount || 0) > 0;
+
+            if (solarGen > 10) {
+              if (!el.classList.contains('pulse-solar')) {
+                el.classList.remove('pulse-battery');
+                el.classList.add('pulse-solar');
+              }
+            } else if (batteryExp > 10 || hasStorage) {
+              // Represents either active battery export or the presence of storage/support nodes
+              if (!el.classList.contains('pulse-battery')) {
+                el.classList.remove('pulse-solar');
+                el.classList.add('pulse-battery');
+              }
+            } else {
+              el.classList.remove('pulse-solar', 'pulse-battery');
+            }
+          } else {
+            // Substation has no active metrics or is unknown
+            el.classList.remove('pulse-solar', 'pulse-battery');
+          }
+        }
+      }
+
+      if (dnoRegionsLayer) dnoRegionsLayer.setStyle(style);
+      if (hoveredRegion) info.update(hoveredRegion);
+
+      const s = data.stats || data.peerGraph;
+      if (s) {
+        document.getElementById('total-nodes').textContent = s.totalNodes || 0;
+        document.getElementById('public-peers').textContent = s.totalPublicNodes || 0;
+        document.getElementById('hub-peers').textContent = s.totalHubPeers || 0;
+        document.getElementById('region-count').textContent = s.totalRegions || 0;
+        document.getElementById('total-capacity').textContent = (s.totalCapacity || 0).toFixed(1);
+        document.getElementById('total-stored').textContent = (s.totalStored || 0).toFixed(1);
+        document.getElementById('total-reserve').textContent = (s.totalReserve || 0).toFixed(1);
+
+        // Populate global aggregation metric
+        document.getElementById('total-export').textContent = s.totalExport !== undefined ? (Number(s.totalExport) * 1000).toFixed(0) : '0';
+        document.getElementById('total-export-today').textContent = s.totalExportToday !== undefined ? Number(s.totalExportToday).toFixed(1) : '0';
+        document.getElementById('total-solar').textContent = s.totalSolar !== undefined ? Number(s.totalSolar).toFixed(0) : '0';
+
+        document.getElementById('updated-at').textContent = new Date().toLocaleTimeString('en-GB');
+      }
+    }
+
+    function findRegionForPoint(lat, lon) {
+      let resolvedRegion = "unknown-dno";
+      const londonFeature = dnoRegionData.features.find(f => f.properties.name === 'london-dno');
+      if (londonFeature && isPointInPolygon([lon, lat], londonFeature.geometry.coordinates[0])) {
+        return 'london-dno';
+      }
+
+      for (const feature of dnoRegionData.features) {
+        if (feature.properties.name === 'london-dno') continue;
+        const coords = feature.geometry.coordinates;
+        if (isPointInPolygon([lon, lat], coords[0])) {
+          if (coords.length > 1 && isPointInPolygon([lon, lat], coords[1])) {
+            continue;
+          }
+          return feature.properties.name;
+        }
+      }
+      return resolvedRegion;
+    }
+
+    function isPointInPolygon(point, vs) {
+      const x = point[0], y = point[1];
+      let inside = false;
+      for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        const xi = vs[i][0], yi = vs[i][1];
+        const xj = vs[j][0], yj = vs[j][1];
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    dnoRegionsLayer = L.geoJson(dnoRegionData, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on({
+          mouseover: (e) => {
+            e.target.setStyle({ weight: 3, color: '#38bdf8', fillOpacity: 0.75, dashArray: '' });
+            hoveredRegion = feature.properties.name;
+            info.update(hoveredRegion);
+          },
+          mouseout: (e) => {
+            dnoRegionsLayer.resetStyle(e.target);
+            hoveredRegion = null;
+            info.update();
+          }
+        });
+      }
+    }).addTo(map);
+    info.update = function (name) {
+      const d = name ? currentRegionsData[name] : null;
+      const physicalSubstationCount = name ? (substationsCountPerRegion[name] || 0) : 0;
+
+      // Pull the carbon intensity fields mapped from the cluster.js backend channel
+      const carbonVal = d?.carbonIntensity !== undefined ? `${d.carbonIntensity} gCO₂/kWh` : 'Fetching...';
+      let carbonColor = '#94a3b8';
+      if (d?.carbonIndex === 'high' || d?.carbonIndex === 'very high') carbonColor = '#ef4444';
+      if (d?.carbonIndex === 'low' || d?.carbonIndex === 'very low') carbonColor = '#10b981';
+
+      let mixHtml = '';
+      if (d?.generationMix) {
+        const topFuels = d.generationMix.sort((a, b) => b.perc - a.perc).slice(0, 3);
+        mixHtml = `<div style="font-size: 11px; margin-top: 4px; color: #94a3b8;">Mix: ${topFuels.map(f => `${f.fuel} ${f.perc}%`).join(', ')}</div>`;
+      }
+
+      if (name) {
+        this._div.innerHTML = `
+          <h4>Region Status</h4>
+          <div class="info-data">
+            <span style="color: #f1f5f9; font-weight: 700; text-transform: uppercase;">${name.replace(/-/g, ' ')}</span><br/>
+            Nodes Active: <b>${d?.nodeCount || 0}</b><br/>
+            Physical Substations: <b style="color: #f97316;">${physicalSubstationCount}</b><br/>
+            
+            Grid Carbon Intensity: <b style="color: ${carbonColor};">${carbonVal} (${d?.carbonIndex || 'N/A'})</b><br/>
+            ${mixHtml}
+
+            <hr style="border: 0; border-top: 1px solid #334155; margin: 6px 0;"/>
+            Energy Stored: <b>${(d?.energyRemainingKwh || 0).toFixed(1)} kWh</b><br/>
+            Total Capacity: <b>${(d?.batteryCapacityKwh || 0).toFixed(1)} kWh</b><br/>
+            Space Available: <b style="color: #10b981;">${(d?.freeSpaceKwh || 0).toFixed(1)} kWh</b><br/>
+            Live Solar Generation: <b style="color: #facc15;">${(d?.totalSolarW || 0).toFixed(0)} W</b><br/>
+            Live Export: <b style="color: #38bdf8;">${((d?.totalExportKW || 0) * 1000).toFixed(0)} W</b><br/>
+            <span style="font-size: 11px; padding-left: 10px; color: #94a3b8;">↳ Solar: ${Number(d?.totalSolarToGridW || 0).toFixed(0)}W | Battery: ${Number(d?.totalBatteryToGridW || 0).toFixed(0)}W</span><br/>
+            Utilisation: <b style="color: ${getColor(d?.utilization)}">${(d?.utilization || 0).toFixed(1)}%</b>
+          </div>
+        `;
+      } else {
+        this._div.innerHTML = '<h4>Region Status</h4><div class="info-data" style="color: #94a3b8;">Hover over a region to inspect capacity</div>';
+      }
+    };
+    fetch('/substationData.json')
+      .then(response => response.json())
+      .then(data => {
+        const elements = data.elements || [];
+
+        elements.forEach(sub => {
+          const lat = sub.lat || (sub.center ? sub.center.lat : null);
+          const lon = sub.lon || (sub.center ? sub.center.lon : null);
+
+          if (lat && lon) {
+            const detectedRegion = findRegionForPoint(lat, lon);
+            const targetId = sub.id.toString().startsWith('sub-') ? sub.id : `sub-${sub.id}`;
+            const name = (sub.tags && sub.tags.name) ? sub.tags.name : `Substation Node #${sub.id}`;
+
+            if (detectedRegion !== "unknown-dno") {
+              substationsCountPerRegion[detectedRegion] = (substationsCountPerRegion[detectedRegion] || 0) + 1;
+            }
+
+            const marker = L.circleMarker([lat, lon], {
+              radius: 4,
+              fillColor: '#38bdf8',
+              color: '#ffffff',
+              weight: 1,
+              opacity: 1,
+              fillOpacity: 0.9,
+              pane: 'substationsPane',
+              interactive: true
+            });
+
+            marker.bindTooltip(() => {
+              const regionalData = currentRegionsData[detectedRegion];
+              const subMetrics = regionalData?.substations?.[targetId] || { nodeCount: 0, exportKW: 0, batteryPowerKW: 0, reserveKW: 0, exportTodayKWh: 0, solarPowerW: 0 };
+
+              const count = subMetrics.nodeCount;
+              const statusColor = count > 0 ? '#10b981' : '#f43f5e';
+
+              // Convert kW back to Watts for detailed substation view
+              const exportW = (subMetrics.exportKW || 0) * 1000;
+              const solarW = (subMetrics.solarPowerW || 0);
+              const exportToday = (subMetrics.exportTodayKWh || 0);
+              const netW = (subMetrics.batteryPowerKW || 0) * 1000;
+              const reserveW = (subMetrics.reserveKW || 0) * 1000;
+
+              return `
+                <div style="font-size: 13px; line-height: 1.5; min-width: 220px; padding: 2px;">
+                  <strong style="color: #38bdf8; font-size: 14px;">${name}</strong><br/>
+                  <span style="color: #94a3b8;">Substation ID:</span> <code>${targetId}</code><br/>
+                  <span style="color: #94a3b8;">Region Area:</span> ${detectedRegion.replace(/-/g, ' ')}<br/>
+                  <hr style="border: 0; border-top: 1px solid #334155; margin: 8px 0;"/>
+                  <span style="color: #94a3b8;">Nodes at this Station:</span> <b style="color: ${statusColor}; font-size: 14px;">${count}</b> active<br/>
+                  <span style="color: #94a3b8;">Live Solar Generation:</span> <b style="color: #facc15;">${solarW.toFixed(0)} W</b><br/>
+                  <span style="color: #94a3b8;">Active Export:</span> <b style="color: #38bdf8;">${exportW.toFixed(0)} W</b><br/>
+                  <span style="font-size: 11px; padding-left: 10px; color: #94a3b8;">↳ Solar: ${(subMetrics.solarToGridW || 0).toFixed(0)}W | Battery: ${(subMetrics.batteryToGridW || 0).toFixed(0)}W</span><br/>
+                  <span style="color: #94a3b8;">Today's Export:</span> <b style="color: #10b981;">${exportToday.toFixed(1)} kWh</b><br/>
+                  <span style="color: #94a3b8;">Net Grid Impact:</span> <b style="color: ${subMetrics.netImpactW > 0 ? '#ef4444' : '#10b981'};">${(subMetrics.netImpactW || 0).toFixed(0)} W</b><br/>
+                  <span style="color: #94a3b8;">Available Reserve:</span> <b style="color: #f43f5e;">${reserveW.toFixed(0)} W</b>
+                </div>
+              `;
+            }, {
+              sticky: true,
+              offset: [15, -15]
+            });
+
+            substationMarkers[targetId] = marker;
+            marker.addTo(substationsLayerGroup);
+          }
+        });
+
+        if (hoveredRegion) info.update(hoveredRegion);
+      })
+      .catch(error => console.error('Error importing and parsing raw overpass api data asset:', error));
+
+    if (typeof io !== 'undefined') {
+      const socket = io();
+      socket.on('cluster-map-update', updateUI);
+    }
+
+    fetch('/api/hub-network')
+      .then(r => r.json())
+      .then(updateUI)
+      .catch(console.error);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,20 @@
+{
+    "name": "gridnode-hub",
+    "version": "0.1.0",
+    "description": "Central Hub server for GridNode peer discovery, aggregation, and public registry.",
+    "main": "src/index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node src/index.js"
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "socket.io": "^4.7.2",
+        "socket.io-client": "^4.7.2",
+        "simple-peer": "^9.11.1",
+        "uuid": "^9.0.0",
+        "gridbnode-crypto": "file:../gridnode-crypto"
+    }
+}

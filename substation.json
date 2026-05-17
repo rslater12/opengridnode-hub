@@ -1,0 +1,121 @@
+[
+    {
+        "id": "sub-lon-001",
+        "name": "Paddington Central",
+        "lat": 51.5175,
+        "lon": -0.1767,
+        "regionId": "london-dno"
+    },
+    {
+        "id": "sub-lon-002",
+        "name": "Shoreditch Primary",
+        "lat": 51.5244,
+        "lon": -0.0789,
+        "regionId": "london-dno"
+    },
+    {
+        "id": "sub-se-001",
+        "name": "Brighton Marina",
+        "lat": 50.8122,
+        "lon": -0.1033,
+        "regionId": "south-east-dno"
+    },
+    {
+        "id": "sub-se-002",
+        "name": "Canterbury East",
+        "lat": 51.2750,
+        "lon": 1.0850,
+        "regionId": "south-east-dno"
+    },
+    {
+        "id": "sub-sou-001",
+        "name": "Southampton Central",
+        "lat": 50.9077,
+        "lon": -1.4044,
+        "regionId": "southern-england-dno"
+    },
+    {
+        "id": "sub-sw-001",
+        "name": "Bristol Temple",
+        "lat": 51.4490,
+        "lon": -2.5810,
+        "regionId": "south-west-dno"
+    },
+    {
+        "id": "sub-mid-001",
+        "name": "Birmingham Jewellery",
+        "lat": 52.4862,
+        "lon": -1.9032,
+        "regionId": "west-midlands-dno"
+    },
+    {
+        "id": "sub-nw-001",
+        "name": "Manchester Salford",
+        "lat": 53.4830,
+        "lon": -2.2600,
+        "regionId": "north-west-dno"
+    },
+    {
+        "id": "sub-ne-001",
+        "name": "Newcastle Quayside",
+        "lat": 54.9700,
+        "lon": -1.6000,
+        "regionId": "north-east-dno"
+    },
+    {
+        "id": "sub-yor-001",
+        "name": "Leeds City",
+        "lat": 53.7930,
+        "lon": -1.5490,
+        "regionId": "yorkshire-dno"
+    },
+    {
+        "id": "sub-wal-001",
+        "name": "Cardiff Bay",
+        "lat": 51.4640,
+        "lon": -3.1680,
+        "regionId": "south-wales-dno"
+    },
+    {
+        "id": "sub-mer-001",
+        "name": "Liverpool Dock",
+        "lat": 53.4084,
+        "lon": -2.9916,
+        "regionId": "merseyside-wales-dno"
+    },
+    {
+        "id": "sub-sco-001",
+        "name": "Edinburgh Waverley",
+        "lat": 55.9520,
+        "lon": -3.1890,
+        "regionId": "south-scotland-dno"
+    },
+    {
+        "id": "sub-sco-002",
+        "name": "Inverness Central",
+        "lat": 57.4778,
+        "lon": -4.2247,
+        "regionId": "north-scotland-dno"
+    },
+    {
+        "id": "sub-ni-001",
+        "name": "Belfast Titanic",
+        "lat": 54.6070,
+        "lon": -5.9100,
+        "regionId": "northern-ireland-dno"
+    },
+    {
+        "id": "sub-east-001",
+        "name": "Norwich Riverside",
+        "lat": 52.6250,
+        "lon": 1.3050,
+        "regionId": "east-england-dno"
+    },
+    {
+        "id": "sub-mid-002",
+        "name": "Nottingham Lace",
+        "lat": 52.9500,
+        "lon": -1.1400,
+        "regionId": "east-midlands-dno"
+    }
+]
