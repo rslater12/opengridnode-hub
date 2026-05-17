@@ -2,7 +2,7 @@
 
 A live network map and telemetry manager for balancing local renewable energy across regional electricity grids (DNOs).
 
-OpenGridNode is a decentralised mesh network for monitoring and aggregating DIY battery storage and solar export data across local DNO regions.
+OpenGridNode is a decentralised mesh network for monitoring and aggregating domestic battery storage and solar export data across local DNO regions.
 
 ## Getting Started
 
